@@ -129,8 +129,8 @@ export default function AnalysisPage() {
                     <span className="text-gray-400 text-xs">{clip.publishedAt}</span>
                     <span className="text-gray-300">·</span>
                     <div className="flex items-center gap-1">
-                      <PlatformIcon platform={clip.primaryPlatform} className={`w-3 h-3 ${colors.icon}`} />
-                      <span className={`text-xs font-medium ${colors.text}`}>{PLATFORM_LABELS[clip.primaryPlatform]}</span>
+                      {/* <PlatformIcon platform={clip.primaryPlatform} className={`w-3 h-3 ${colors.icon}`} /> */}
+                      {/* <span className={`text-xs font-medium ${colors.text}`}>{PLATFORM_LABELS[clip.primaryPlatform]}</span> */}
                     </div>
                   </div>
                 </div>

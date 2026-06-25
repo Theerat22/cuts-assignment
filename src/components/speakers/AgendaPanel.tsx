@@ -56,7 +56,7 @@ export function AgendaPanel({ speakerId, onCountChange }: AgendaPanelProps) {
   };
 
   const handleDownload = (file: AgendaFile) => {
-    window.open(file.file_url, "_blank");
+    window.open(`/api/agenda-files/${file.id}`, "_blank");
   };
 
   return (

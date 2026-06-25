@@ -35,6 +35,7 @@ export default function AnalysisDetailPage({
   if (!clip) notFound();
 
   const [activeTab, setActiveTab] = useState<Platform>("instagram");
+  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
   const metrics = clip[activeTab];
   const colors = PLATFORM_COLORS[activeTab];
 
@@ -71,16 +72,16 @@ export default function AnalysisDetailPage({
             <div className="flex flex-wrap items-center gap-3 mt-3">
               <div className="flex items-center gap-1.5 text-gray-500 text-xs">
                 <CalendarDays className="w-3.5 h-3.5 text-gray-400" />
-                ปล่อยวันที่ {clip.publishedAt}
+                ลงวันที่ {clip.publishedAt}
               </div>
               <div className="flex items-center gap-1.5">
-                <PlatformIcon
+                {/* <PlatformIcon
                   platform={clip.primaryPlatform}
                   className={`w-3.5 h-3.5 ${PLATFORM_COLORS[clip.primaryPlatform].icon}`}
                 />
                 <span className={`text-xs font-medium ${PLATFORM_COLORS[clip.primaryPlatform].text}`}>
                   {PLATFORM_LABELS[clip.primaryPlatform]}
-                </span>
+                </span> */}
               </div>
               <div className="flex items-center gap-1.5 text-gray-500 text-xs">
                 <Eye className="w-3.5 h-3.5 text-gray-400" />
@@ -177,17 +178,43 @@ export default function AnalysisDetailPage({
             <div className="text-gray-900 font-semibold text-base">Views ตามช่วงเวลา (48 ชั่วโมงแรก)</div>
             <div className="text-gray-400 text-xs mt-0.5">รวมทุก Platform</div>
           </div>
+          {hoveredBar !== null && (
+            <div className="text-right">
+              <div className="text-gray-900 font-bold text-base">{clip.viewsTimeline[hoveredBar]}K</div>
+              <div className="text-gray-400 text-xs">ชั่วโมงที่ {hoveredBar}</div>
+            </div>
+          )}
         </div>
-        <div className="flex items-end gap-1 h-28">
+        <div className="flex items-end gap-0.5 h-32 relative">
           {clip.viewsTimeline.map((v, i) => {
             const pct = (v / (timelineMax || 1)) * 100;
+            const isHovered = hoveredBar === i;
+            const isEarly = i < 6;
             return (
               <div
                 key={i}
-                title={`${i * 1}h: ${v}K views`}
-                className={`flex-1 rounded-t-sm transition-opacity hover:opacity-100 ${i < 6 ? "bg-brand-dark opacity-90" : "bg-brand-muted border border-brand-edge"}`}
-                style={{ height: `${pct}%` }}
-              />
+                className="flex-1 relative group flex flex-col justify-end"
+                style={{ height: "100%" }}
+                onMouseEnter={() => setHoveredBar(i)}
+                onMouseLeave={() => setHoveredBar(null)}
+              >
+                {isHovered && (
+                  <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded-md whitespace-nowrap z-10 pointer-events-none">
+                    {v}K
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900" />
+                  </div>
+                )}
+                <div
+                  className={`w-full rounded-t-sm transition-all duration-150 ${
+                    isHovered
+                      ? "bg-brand-dark opacity-100 scale-x-110"
+                      : isEarly
+                      ? "bg-brand-dark opacity-80"
+                      : "bg-brand-muted border border-brand-edge"
+                  }`}
+                  style={{ height: `${pct}%` }}
+                />
+              </div>
             );
           })}
         </div>

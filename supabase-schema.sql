@@ -189,7 +189,44 @@ create policy "admin_all_notifications"  on notifications  for all to authentica
 
 
 -- ============================================================
--- 6. Realtime
+-- 6. Storage
+-- ============================================================
+
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'agenda-files',
+  'agenda-files',
+  false,
+  5242880,
+  array[
+    'application/pdf',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ]
+)
+on conflict (id) do nothing;
+
+-- Admin: full access
+create policy "admin_storage_all" on storage.objects
+  for all to authenticated
+  using (bucket_id = 'agenda-files')
+  with check (bucket_id = 'agenda-files');
+
+-- Speaker portal (anon): upload only
+create policy "speaker_storage_upload" on storage.objects
+  for insert to anon
+  with check (bucket_id = 'agenda-files');
+
+-- Speaker portal (anon): read (for download link)
+create policy "speaker_storage_read" on storage.objects
+  for select to anon
+  using (bucket_id = 'agenda-files');
+
+
+-- ============================================================
+-- 7. Realtime
 -- ============================================================
 -- Enable realtime for tables the portal and admin poll.
 

@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from "react";
 import { Upload, FileText, X, CheckCircle, Clock, AlertCircle, Download } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { AgendaFile } from "@/lib/types";
-import { createClient } from "@/lib/supabase";
 
 interface AgendaUploadProps {
   speakerId: string;
@@ -51,45 +50,26 @@ export function AgendaUpload({ speakerId, speakerToken, deadline }: AgendaUpload
     setUploading(true);
     setErrors([]);
     const errs: string[] = [];
-    const supabase = createClient();
 
     for (const f of staged) {
-      // 5MB limit check
       if (f.size > 5 * 1024 * 1024) {
         errs.push(`${f.name}: ไฟล์ขนาดเกิน 5MB`);
         continue;
       }
       try {
-        const path = `${speakerId}/${Date.now()}_${f.name}`;
-        const { error: uploadError } = await supabase.storage
-          .from("agenda-files")
-          .upload(path, f);
+        const form = new FormData();
+        form.append("file", f);
+        form.append("speakerId", speakerId);
+        if (deadline) form.append("deadline", deadline);
 
-        if (uploadError) {
-          errs.push(`${f.name}: ${uploadError.message}`);
-          continue;
-        }
-
-        const { data: publicUrlData } = supabase.storage
-          .from("agenda-files")
-          .getPublicUrl(path);
-
-        const fileUrl = publicUrlData.publicUrl;
-
-        const res = await fetch("/api/agenda-files", {
+        const res = await fetch("/api/agenda-files/upload", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            speaker_id: speakerId,
-            file_name: f.name,
-            file_url: fileUrl,
-            file_size: f.size,
-            deadline,
-          }),
+          body: form,
         });
 
+        const json = await res.json();
         if (!res.ok) {
-          errs.push(`${f.name}: ไม่สามารถบันทึกข้อมูลได้`);
+          errs.push(`${f.name}: ${json.error ?? "อัปโหลดไม่สำเร็จ"}`);
         }
       } catch (e) {
         errs.push(`${f.name}: ${(e as Error).message}`);
@@ -222,7 +202,7 @@ export function AgendaUpload({ speakerId, speakerToken, deadline }: AgendaUpload
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <button
-                    onClick={() => window.open(file.file_url, "_blank")}
+                    onClick={() => window.open(`/api/agenda-files/${file.id}`, "_blank")}
                     className="flex items-center gap-1 text-xs text-brand-dark hover:underline"
                   >
                     <Download className="h-3 w-3" />
