@@ -1,10 +1,11 @@
 "use client";
 import { useState } from "react";
-import { UserPlus, Calendar, Mail, Building, MapPin, Clock, AlarmClock, User, FileText, Briefcase } from "lucide-react";
+import { UserPlus, Calendar, Mail, Building, MapPin, AlarmClock, User, FileText, Briefcase } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Input, Textarea, Select } from "@/components/ui/Input";
+import { TimePicker } from "@/components/ui/TimePicker";
 import { Button } from "@/components/ui/Button";
-import { Speaker, TeamMember } from "@/lib/types";
+import { TeamMember } from "@/lib/types";
 import { generatePortalToken } from "@/lib/utils";
 
 interface AddSpeakerModalProps {
@@ -84,12 +85,11 @@ export function AddSpeakerModal({ isOpen, onClose, onAdd, teamMembers }: AddSpea
     }
     setIsLoading(true);
     try {
-      const newSpeakerData = {
+      onAdd({
         ...form,
         status: "pending",
         portal_token: generatePortalToken(),
-      };
-      await onAdd(newSpeakerData);
+      });
       setForm({
         name: "", email: "", organization: "", title: "",
         seminar_date: "", seminar_time: "", seminar_end_time: "", seminar_location: "",
@@ -119,7 +119,6 @@ export function AddSpeakerModal({ isOpen, onClose, onAdd, teamMembers }: AddSpea
             <Input
               label="ชื่อ-นามสกุล *"
               name="name"
-              placeholder="เช่น ดร.สมชาย ใจดี"
               value={form.name}
               onChange={(e) => f("name", e.target.value)}
               onBlur={(e) => handleBlur("name", e.target.value)}
@@ -130,7 +129,6 @@ export function AddSpeakerModal({ isOpen, onClose, onAdd, teamMembers }: AddSpea
               label="อีเมล *"
               type="email"
               name="email"
-              placeholder="example@email.com"
               value={form.email}
               onChange={(e) => f("email", e.target.value)}
               onBlur={(e) => handleBlur("email", e.target.value)}
@@ -139,14 +137,12 @@ export function AddSpeakerModal({ isOpen, onClose, onAdd, teamMembers }: AddSpea
             />
             <Input
               label="ตำแหน่ง"
-              placeholder="เช่น CEO, ผู้อำนวยการ"
               value={form.title}
               onChange={(e) => f("title", e.target.value)}
               icon={<Briefcase className="h-4 w-4" />}
             />
             <Input
               label="องค์กร / หน่วยงาน"
-              placeholder="เช่น มหาวิทยาลัย ABC"
               value={form.organization}
               onChange={(e) => f("organization", e.target.value)}
               icon={<Building className="h-4 w-4" />}
@@ -173,27 +169,20 @@ export function AddSpeakerModal({ isOpen, onClose, onAdd, teamMembers }: AddSpea
               error={errors.seminar_date}
               icon={<Calendar className="h-4 w-4" />}
             />
-            <Input
+            <TimePicker
               label="เวลาเริ่ม *"
-              type="time"
-              name="seminar_time"
               value={form.seminar_time}
-              onChange={(e) => f("seminar_time", e.target.value)}
-              onBlur={(e) => handleBlur("seminar_time", e.target.value)}
+              onChange={(v) => { f("seminar_time", v); if (touched.seminar_time) validateField("seminar_time", v); }}
+              onBlur={() => handleBlur("seminar_time", form.seminar_time)}
               error={errors.seminar_time}
-              icon={<Clock className="h-4 w-4" />}
             />
-            <Input
+            <TimePicker
               label="เวลาเสร็จ"
-              type="time"
-              name="seminar_end_time"
               value={form.seminar_end_time}
-              onChange={(e) => f("seminar_end_time", e.target.value)}
-              icon={<Clock className="h-4 w-4" />}
+              onChange={(v) => f("seminar_end_time", v)}
             />
             <Input
               label="สถานที่"
-              placeholder="เช่น ห้อง Auditorium A ชั้น 3"
               value={form.seminar_location}
               onChange={(e) => f("seminar_location", e.target.value)}
               icon={<MapPin className="h-4 w-4" />}
@@ -228,7 +217,6 @@ export function AddSpeakerModal({ isOpen, onClose, onAdd, teamMembers }: AddSpea
             <h3 className="text-sm font-semibold text-gray-700">หมายเหตุ</h3>
           </div>
           <Textarea
-            placeholder="หัวข้อการบรรยาย, ข้อมูลเพิ่มเติม..."
             value={form.notes}
             onChange={(e) => f("notes", e.target.value)}
             rows={3}

@@ -5,7 +5,7 @@ import {
   UserPlus, Search, Users, LayoutGrid, List, Mic2, ArrowUpDown
 } from "lucide-react";
 import { SpeakerCard } from "@/components/dashboard/SpeakerCard";
-import { StatsBar } from "@/components/dashboard/StatsBar";
+// import { StatsBar } from "@/components/dashboard/StatsBar";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
 import { SpeakerDetailModal } from "@/components/speakers/SpeakerDetailModal";
 import { AddSpeakerModal } from "@/components/speakers/AddSpeakerModal";
@@ -154,7 +154,7 @@ export default function DashboardPage() {
               </div>
               <div className="hidden sm:block">
                 <h1 className="font-bold text-gray-900 text-base leading-tight">Speaker CRM</h1>
-                <p className="text-xs text-gray-400">ทีมฝ่าย Activity</p>
+                <p className="text-xs text-gray-400">ฝ่าย Activity</p>
               </div>
             </div>
 
@@ -183,7 +183,7 @@ export default function DashboardPage() {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Stats */}
-        <StatsBar speakers={speakers} />
+        {/* <StatsBar speakers={speakers} /> */}
 
         {/* Search & Filters */}
         <div className="flex flex-col sm:flex-row gap-3">

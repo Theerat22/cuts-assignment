@@ -1,12 +1,66 @@
 import { NextRequest, NextResponse } from "next/server";
 import nodemailer from "nodemailer";
 
+interface CalendarData {
+  title: string;
+  date: string;          // "YYYY-MM-DD"
+  startTime: string;     // "HH:MM" 24h
+  endTime?: string;      // "HH:MM" 24h, optional
+  location?: string;
+}
+
+function toIcsDateTime(date: string, time: string): string {
+  // "2026-06-25" + "09:00" → "20260625T090000"
+  return date.replace(/-/g, "") + "T" + time.replace(":", "") + "00";
+}
+
+function buildIcs(data: CalendarData, description: string, uid: string): string {
+  const dtStart = toIcsDateTime(data.date, data.startTime);
+
+  let endTime = data.endTime;
+  if (!endTime) {
+    // Default: 1 hour after start
+    const [h, m] = data.startTime.split(":").map(Number);
+    const endH = (h + 1) % 24;
+    endTime = `${String(endH).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  }
+  const dtEnd = toIcsDateTime(data.date, endTime);
+
+  const now = new Date()
+    .toISOString()
+    .replace(/[-:]/g, "")
+    .replace(/\.\d{3}/, "");
+
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Speaker Management//Activity Team//TH",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${uid}`,
+    `DTSTAMP:${now}Z`,
+    `DTSTART;TZID=Asia/Bangkok:${dtStart}`,
+    `DTEND;TZID=Asia/Bangkok:${dtEnd}`,
+    `SUMMARY:งานสัมมนา — ${data.title}`,
+    data.location ? `LOCATION:${data.location}` : "",
+    `DESCRIPTION:${description.replace(/\n/g, "\\n")}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean);
+
+  return lines.join("\r\n");
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { to, subject, body, speakerId, portalToken } = await req.json();
+    const { to, subject, body, speakerId, portalToken, calendarData } =
+      await req.json();
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     const portalUrl = `${appUrl}/portal/${portalToken}`;
+
+    const plainBody = `${body}\n\n---\nPortal ส่วนตัวของท่าน: ${portalUrl}`;
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || "smtp.gmail.com",
@@ -18,33 +72,26 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    const htmlBody = `
-      <div style="font-family: 'Noto Sans Thai', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <div style="background: linear-gradient(135deg, #4F46E5, #7C3AED); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
-          <h1 style="color: white; margin: 0; font-size: 22px;">งานสัมมนา</h1>
-          <p style="color: rgba(255,255,255,0.8); margin: 8px 0 0; font-size: 14px;">Activity Team</p>
-        </div>
-        <div style="background: white; padding: 30px; border: 1px solid #e5e7eb; border-top: none;">
-          <div style="white-space: pre-line; color: #374151; line-height: 1.7; font-size: 15px;">${body}</div>
-          <div style="margin-top: 30px; padding: 20px; background: #f0f4ff; border-radius: 12px; border: 1px solid #c7d2fe;">
-            <p style="margin: 0 0 12px; font-weight: 600; color: #4338ca; font-size: 14px;">Portal ส่วนตัวของท่าน</p>
-            <p style="margin: 0 0 12px; color: #6366f1; font-size: 13px;">ท่านสามารถเข้าถึงข้อมูลงาน, อัปโหลดไฟล์ และส่งคำถามผ่าน Portal ส่วนตัว</p>
-            <a href="${portalUrl}" style="display: inline-block; padding: 12px 24px; background: #4F46E5; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">เข้าสู่ Portal →</a>
-          </div>
-        </div>
-        <div style="background: #f9fafb; padding: 20px; border-radius: 0 0 16px 16px; border: 1px solid #e5e7eb; border-top: none; text-align: center;">
-          <p style="color: #9ca3af; font-size: 12px; margin: 0;">ส่งโดยทีมฝ่าย Activity • Speaker Management System</p>
-        </div>
-      </div>
-    `;
-
-    await transporter.sendMail({
+    const mailOptions: Parameters<typeof transporter.sendMail>[0] = {
       from: `"ทีมฝ่าย Activity" <${process.env.SMTP_FROM}>`,
       to,
       subject,
-      text: body,
-      html: htmlBody,
-    });
+      text: plainBody,
+    };
+
+    if (calendarData) {
+      const uid = `${speakerId ?? "spk"}-${Date.now()}@speaker-management`;
+      const icsContent = buildIcs(calendarData, plainBody, uid);
+      mailOptions.attachments = [
+        {
+          filename: "seminar-invite.ics",
+          content: icsContent,
+          contentType: "text/calendar; charset=utf-8; method=REQUEST",
+        },
+      ];
+    }
+
+    await transporter.sendMail(mailOptions);
 
     return NextResponse.json({ success: true });
   } catch (error) {

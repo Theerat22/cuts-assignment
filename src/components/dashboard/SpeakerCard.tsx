@@ -7,7 +7,6 @@ import {
   getStatusLabel,
   getStatusColor,
   getStatusDot,
-  getStatusCardBorder,
   formatThaiDate,
   getInitials,
   isDeadlineNear,
@@ -31,7 +30,7 @@ export function SpeakerCard({ speaker, onClick }: SpeakerCardProps) {
       whileTap={{ scale: 0.98 }}
       transition={{ duration: 0.18, ease: "easeOut" }}
       onClick={onClick}
-      className={`bg-white rounded-2xl border shadow-sm hover:shadow-lg cursor-pointer transition-all duration-200 overflow-hidden ${getStatusCardBorder(speaker.status)}`}
+      className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg cursor-pointer transition-all duration-200 overflow-hidden"
     >
       <div className="p-5">
         {/* Header */}

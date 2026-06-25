@@ -1,9 +1,8 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Sparkles, Send, Copy, Check, Loader2, Link } from "lucide-react";
+import { Mail, Sparkles, Send, Copy, Check, Link } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Textarea } from "@/components/ui/Input";
 import { Speaker } from "@/lib/types";
 import { formatThaiDateTime } from "@/lib/utils";
 
@@ -13,10 +12,10 @@ interface EmailDraftProps {
 }
 
 function generateDefaultEmail(speaker: Speaker): { subject: string; body: string } {
-  const subject = `เรียนเชิญเป็นวิทยากรในงานสัมมนา - ${speaker.name}`;
-  const body = `เรียน ${speaker.name}
+  const subject = `เรียนเชิญเป็นวิทยากรในงานสัมมนา - คุณ${speaker.name}`;
+  const body = `เรียน คุณ${speaker.name}
 
-สวัสดีครับ/ค่ะ ในนามของทีมฝ่าย Activity ขอเรียนเชิญท่านเป็นวิทยากรในงานสัมมนาของเรา
+สวัสดีครับ/ค่ะ ในนามของฝ่าย Activity ขอเรียนเชิญท่านเป็นวิทยากรในงานสัมมนาของเรา
 
 รายละเอียดงาน:
 - วันและเวลา: ${formatThaiDateTime(speaker.seminar_date, speaker.seminar_time)}
@@ -34,7 +33,7 @@ ${speaker.seminar_location ? `- สถานที่: ${speaker.seminar_locatio
 หากมีข้อสงสัยประการใด กรุณาติดต่อทีมงานผ่าน Portal หรือตอบกลับอีเมลนี้ได้เลยครับ/ค่ะ
 
 ขอแสดงความนับถือ
-ทีมฝ่าย Activity`;
+ฝ่าย Activity`;
   return { subject, body };
 }
 
@@ -93,6 +92,13 @@ export function EmailDraft({ speaker, onSend }: EmailDraftProps) {
           body,
           speakerId: speaker.id,
           portalToken: speaker.portal_token,
+          calendarData: {
+            title: speaker.name,
+            date: speaker.seminar_date,
+            startTime: speaker.seminar_time,
+            endTime: speaker.seminar_end_time,
+            location: speaker.seminar_location,
+          },
         }),
       });
       setSent(true);
@@ -150,7 +156,7 @@ export function EmailDraft({ speaker, onSend }: EmailDraftProps) {
               <Sparkles className="h-4 w-4 text-brand-dark" />
               <p className="text-sm font-medium text-brand-dark">Gemini AI ช่วยปรับอีเมล</p>
             </div>
-            <p className="text-xs text-brand-dark/70 mb-3">บอกให้ AI ช่วยปรับแต่งอีเมล เช่น &quot;ทำให้เป็นทางการมากขึ้น&quot; หรือ &quot;เพิ่มความอบอุ่น&quot;</p>
+            <p className="text-xs text-brand-dark/70 mb-3">บอกให้ AI ช่วยปรับแต่งอีเมล เช่น &quot;ทำให้เป็นทางการมากขึ้น&quot;</p>
             <div className="flex gap-2">
               <input
                 value={aiPrompt}
@@ -180,9 +186,12 @@ export function EmailDraft({ speaker, onSend }: EmailDraftProps) {
       </div>
 
       {/* Portal link notice */}
-      <div className="p-3 bg-brand-muted rounded-xl border border-brand-edge">
+      <div className="p-3 bg-brand-muted rounded-xl border border-brand-edge space-y-1">
         <p className="text-xs text-brand-dark">
           <Link className="h-3 w-3 shrink-0 inline-block mr-1.5 align-[-1px]" />ระบบจะแนบลิงก์ Portal ส่วนตัวของวิทยากรไปพร้อมกับอีเมลโดยอัตโนมัติ
+        </p>
+        <p className="text-xs text-brand-dark">
+          <Mail className="h-3 w-3 shrink-0 inline-block mr-1.5 align-[-1px]" />ไฟล์ Calendar (.ics) จะถูกแนบมาด้วย วิทยากรสามารถเพิ่มเข้า Google Calendar / Outlook ได้ทันที
         </p>
       </div>
 

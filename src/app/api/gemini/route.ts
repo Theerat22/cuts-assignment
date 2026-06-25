@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const systemPrompt = `คุณเป็นผู้ช่วยในการเขียนอีเมลภาษาไทยสำหรับงานสัมมนา กำลังช่วยปรับปรุงอีเมลถึงวิทยากร ${speakerName}
 
